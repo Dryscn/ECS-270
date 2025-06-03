@@ -1,0 +1,21 @@
+Load the Pre-trained BiomedCLIP Model:
+Retrieve the BiomedCLIP checkpoint which contains both the vision encoder and text encoder。 This gives a single model instance that outputs image embeddings, text embeddings, and a learnable logit scale.
+
+Freeze the Vision Encoder:
+This ensures that during training, no gradient updates modify any weights in the image encoder, so image embeddings remain fixed.
+
+Keep Text Encoder Trainable:
+Leave all layers associated with text processing trainable. These parameters will be the only ones updated during fine-tuning.
+
+Define the Contrastive (InfoNCE) Loss:
+In each training step, pass the batch of images and token IDs through BiomedCLIP’s forward method to obtain (image_embeds, text_embeds, logit_scale). Normalize both embedding tensors along their feature dimension. 
+Compute a similarity matrix by taking the dot products of normalized image embeddings with normalized text embeddings. Compute the cross-entropy loss over each row and each column, finally averaging both losses to form the total InfoNCE objective.
+
+Select an Optimizer for Text Encoder:
+Choose a standard optimizer AdamW
+
+Run the Training Loop:
+For each epoch, compute embeddings via clip_model(images, text_ids), then calculate the InfoNCE loss. Call loss.backward(), which propagates gradients solely into the text encoder. 
+
+Monitor Loss and Retrieval Accuracy:
+Periodically log the training loss. Since the image encoder is frozen, improvements in these metrics indicate that the text encoder is successfully aligning with fixed image features.
